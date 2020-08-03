@@ -1,5 +1,37 @@
-"""
-Step Implementer for the create-container-image step for Buildah.
+"""Step Implementer for the create-container-image step for Skopeo.
+
+Step Configuration
+------------------
+
+Step configuration expected as input to this step.
+Could come from either configuration file or
+from runtime configuration.
+
+| Configuration Key | Required? | Default  | Description
+|-------------------|-----------|----------|-----------
+| `destination`     | True      |          | Container image repository destination to push image to
+| `src-tls-verify`  | True      | `'true'` | Whether to very TLS for source of image
+| `dest-tls-verify` | True      | `'true'` | Whether to verify TLS for destination of image
+
+Expected Previous Step Results
+------------------------------
+
+Results expected from previous steps that this step requires.
+
+| Step Name                | Result Key       | Description
+|--------------------------|------------------|------------
+| `generate-metadata`      | `image-tag`      | Tag to push image with
+| `create-container-image` | `image-tar-file` | Local tar file of image to push
+
+Results
+-------
+
+Results output by this step.
+
+| Result Key  | Description
+|-------------|------------
+| `image-tag` | Pushed destination image tag
+
 """
 import sys
 import sh
@@ -56,17 +88,17 @@ class Skopeo(StepImplementer):
     def _run_step(self, runtime_step_config):
 
         version = "latest"
-        if(self.get_step_results('generate-metadata') and \
-          self.get_step_results('generate-metadata').get('image-tag')):
-            version = self.get_step_results('generate-metadata')['image-tag']
+        if(self.get_step_results(DefaultSteps.GENERATE_METADATA) and \
+          self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')):
+            version = self.get_step_results(DefaultSteps.GENERATE_METADATA)['image-tag']
         else:
             print('No version found in metadata. Using latest')
 
         image_tar_file = ''
         if(self.get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE) and \
-          self.get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE).get('image_tar_file')):
+          self.get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE).get('image-tar-file')):
             image_tar_file = self.\
-            get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE)['image_tar_file']
+            get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE)['image-tar-file']
         else:
             raise RuntimeError('Missing image tar file from ' + DefaultSteps.CREATE_CONTAINER_IMAGE)
 
@@ -84,7 +116,7 @@ class Skopeo(StepImplementer):
             raise RuntimeError('Error invoking skopeo: {error}'.format(error=error))
 
         results = {
-            'image_tag' : destination_with_version
+            'image-tag' : destination_with_version
         }
 
         return results

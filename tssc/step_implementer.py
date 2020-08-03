@@ -26,7 +26,6 @@ class DefaultSteps:  # pylint: disable=too-few-public-methods
     CONTAINER_IMAGE_UNIT_TEST = 'container-image-unit-test'
     CONTAINER_IMAGE_STATIC_COMPLIANCE_SCAN = 'container-image-static-compliance-scan'
     CONTAINER_IMAGE_STATIC_VULNERABILITY_SCAN = 'container-image-static-vulnerability-scan'
-    PUSH_TRUSTED_CONTAINER_IMAGE = 'push-trusted-container-image'
     CREATE_DEPLOYMENT_ENVIRONMENT = 'create-deployment-environment'
     DEPLOY = 'deploy'
     UAT = 'uat'
@@ -119,8 +118,23 @@ class StepImplementer(ABC):  # pylint: disable=too-few-public-methods
 
         Raises
         ------
-        TSSCException
-            If existing step results file has invalid YAML.
+        ValueError
+            If step config is invalid.
+        """
+
+    def _validate_runtime_step_config(self, runtime_step_config):
+        """
+        Function for implementers to override to do custom runtime step configuration validation.
+
+        Parameters
+        ----------
+        runtime_step_config : dict
+            Runtime step configuration to validate.
+
+        Raises
+        ------
+        ValueError
+            If step config is invalid.
         """
 
     @classmethod
@@ -179,6 +193,7 @@ class StepImplementer(ABC):  # pylint: disable=too-few-public-methods
 
         StepImplementer.__print_section_title("TSSC Step Start - {}".format(self.step_name()))
         runtime_step_config = {**global_step_config_defaults, **self.step_config, **kwargs}
+        self._validate_runtime_step_config(runtime_step_config)
 
         StepImplementer.__print_data('Global Default Static Step Configuration', \
           global_step_config_defaults)

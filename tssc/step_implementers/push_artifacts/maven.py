@@ -1,5 +1,48 @@
-"""
-Step Implementer for the push-artifacts step for Maven.
+"""Step Implementer for the push-artifacts step for Maven.
+
+Step Configuration
+------------------
+
+Step configuration expected as input to this step.
+Could come from either configuration file or
+from runtime configuration.
+
+| Configuration Key | Required? | Default | Description
+|-------------------|-----------|---------|-----------
+| `url`             | True      |         | URL to the artifact repository to push the artifact to.
+| `user`            | False     |         | User to authenticate with the artifact repository.
+| `password`        | False     |         | Password to authenticate with the artifact repository.
+
+
+Expected Previous Step Results
+------------------------------
+
+Results expected from previous steps that this step requires.
+
+| Step Name           | Result Key  | Description
+|---------------------|-------------|------------
+| `generate-metadata` | `version`   | TODO
+| `package`           | `artifacts` |
+
+Results
+-------
+
+Results output by this step.
+
+| Result Key  | Description
+|-------------|------------
+| `artifacts` | An array of dictionaries with information on the pushed artifacts.
+
+**artifacts**
+Keys in the dictionary elements in the `artifacts` array in the step results.
+
+| `artifacts` Key | Description
+|-----------------|------------
+| `url`           | URL to the artifact pushed to the artifact repository
+| `path`          | Absolute path to the artifact pushed to the artifact repository
+| `artifact-id`   | Maven artifact ID pushed to the artifact repository
+| `group-id`      | Maven group ID pushed to the artifact repository
+| `version`       | Version pushed to the artifact repository
 """
 import re
 import sh
@@ -38,8 +81,7 @@ class Maven(StepImplementer):
         if 'url' not in step_config or not step_config['url']:
             raise ValueError('url must have none empty value in the step configuration')
 
-    @staticmethod
-    def _validate_runtime_step_config(runtime_step_config):
+    def _validate_runtime_step_config(self, runtime_step_config):
         if not all(element in runtime_step_config for element in OPTIONAL_ARGS) \
           and any(element in runtime_step_config for element in OPTIONAL_ARGS):
             raise ValueError('Either user or password is not set. Neither ' \
@@ -50,8 +92,6 @@ class Maven(StepImplementer):
         password = ''
 
         url = runtime_step_config['url']
-
-        self._validate_runtime_step_config(runtime_step_config)
 
         if any(element in runtime_step_config for element in OPTIONAL_ARGS):
             if(runtime_step_config.get('user') \
