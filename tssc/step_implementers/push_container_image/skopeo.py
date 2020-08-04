@@ -84,7 +84,9 @@ class Skopeo(StepImplementer):
             raise RuntimeError('Error invoking skopeo: {error}'.format(error=error))
 
         results = {
-            'image_tag' : destination_with_version
+            'image-tag' : destination_with_version,
+            'image-version' : (version).lower(),
+            'image-url' : runtime_step_config['destination']
         }
 
         return results

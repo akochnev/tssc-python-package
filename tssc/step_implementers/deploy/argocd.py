@@ -152,26 +152,98 @@ Results output by this step.
         return image_version        
 
     def _run_step(self, runtime_step_config):
-        results = {}
+        #results = {}
 
+        git_username = None
+        git_password = None
+
+        ## Checks for git username and password
+        self._validate_runtime_step_config(runtime_step_config)
 
         # Create the argocd project (via argocli) if it doesn't already exist
-
-        # Retrieve image-version and image-url from the previous output
-
-        # Create a flat dictionary of all config parameters from previous steps and the current step config
-
-        # Use jinja to create values.yaml from values.yaml.j2 using the dictionary above
+        print(
+            sh.argocd.login(
+                runtime_step_config['argocd-api'],
+                '--username=' + runtime_step_config['argocd-username'],
+                '--password=' + runtime_step_config['argocd-password'],
+                 '--insecure', _out=sys.stdout
+            )
+        )
+        ## argocd login <ARGOCD_SERVER> --username argocd-username --password argocd-password --insecure
+        ## argocd login akim-argocd-server-akim-argocd.apps.tssc.rht-set.com --username=admin --password=argocd-server-86cf69886-p2qpp --insecure
+        try: 
+            print(sh.argocd.app.get(application_name), _out=sys.stdout)
+        except:
+            print('No app found, creating a new app...')
+            print(
+                sh.argocd.app.create( 
+                    application_name,
+                    runtime_step_config['argocd-api'],
+                    '--repo=' + runtime_step_config['helm-config-repo'],
+                    '--revision=' + runtime_step_config['helm-config-repo-branch'],
+                    ## TODO: PATH AND SERVER (add global)
+                    '--path=./',
+                    '--dest-server=' + kube-api-uri,
+                    '--dest-namespace=' + runtime_step_config['argocd-destination-namespace']
+                )
+            )
+        ## argocd app get <APP_NAME> ! exist (argocd app create <APP_NAME> --repo <REPO_URL> --revision <BRANCH> --path <PATH> --dest-server https://kubernetes.default.svc --dest-namespace <NAMESPACE>)
 
         # Clone the config repo
+        git_url = self._git_url(runtime_step_config)
+
+        sh.git.clone(runtime_step_config['helm-config-repo'])
         
         # Checkout the correct branch
 
+        sh.git.checkout(runtime_step_config['helm-config-repo-branch'])
+
+        # Retrieve image-version and image-url from the previous output
+        version = self._get_image_version()
+        url = self._get_image_url()
+
+        # Create a flat dictionary of all config parameters from previous steps and the current step config
+
+        jinja_runtime_step_config = {'image-url' : url, 'image-version' : version}
+        for key in runtime_step_config:
+            jinja_runtime_step_config[key.replace('-','_')] = runtime_step_config[key]
+        
+
+        # Use jinja to create values.yaml from values.yaml.j2 using the dictionary above convert dashes to underscore
+
+        ## Load data from YAML into Python dictionary
+        #config_data = yaml.safe_load(open('./tssc-config.yml'))
+        #config_data = yaml.safe_load(jinja_runtime_step_config)
+
+
+        ## Load Jinja2 template
+        env = Environment(loader = FileSystemLoader('./' + runtime_step_config['helm-config-repo']), trim_blocks=True, lstrip_blocks=True)
+        template = env.get_template('values.yaml.j2')
+
+        ## Write new values file with config data
+        outFile = open("values.yml", "w")
+        outFile.writelines(template.render(jinja_runtime_step_config))
+        outFile.close()
+
         # Copy the generated values.yaml over 
+
+        sh.cp('values.yml', './' + runtime_step_config['helm-config-repo'] + '/values.yml')
 
         # Commit the change, tag the branch, push the repo
 
+        tag = self._get_tag()
+        git_commit_msg = "Configuration Change from TSSC Pipeline. Tag: " + tag
+
+        sh.git.commit('-am', git_commit_msg)
+
+        self._git_tag(tag, git_commit_msg)
+
+        self._git_push('http://' + username + ':' + password + '@' + git_url[7:])
+
         # User argo cli to verify deployment has started (timeout value)
+        print(
+            sh.argocd.app.sync(), _out=sys.stdout
+        )
 
         # Set the results:
         # results = {
@@ -237,7 +309,7 @@ Results output by this step.
         return return_val
 
     @staticmethod
-    def _git_tag(git_tag_value): # pragma: no cover
+    def _git_tag(git_tag_value, git_tag_comment): # pragma: no cover
         try:
             # NOTE:
             # this force is only needed locally in case of a re-reun of the same pipeline
@@ -245,7 +317,7 @@ Results output by this step.
             # making this an acceptable work around to the issue since on the off chance
             # actually orverwriting a tag with a different comment, the push will fail
             # because the tag will be attached to a different git hash.
-            sh.git.tag(git_tag_value, '-f')
+            sh.git.tag('-a', git_tag_value, '-f -m', git_tag_comment)
         except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
             raise RuntimeError('Error invoking git tag ' + git_tag_value)
 
@@ -260,4 +332,4 @@ Results output by this step.
             raise RuntimeError('Error invoking git push')
 
 # register step implementer
-TSSCFactory.register_step_implementer(Git, True)
+TSSCFactory.register_step_implementer(ArgoCD, True)
