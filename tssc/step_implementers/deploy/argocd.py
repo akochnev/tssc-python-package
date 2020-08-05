@@ -15,8 +15,8 @@ from runtime configuration.
 | `argocd-password`         | True               |                      | Password for accessing the
                                                                           ArgoCD API
 | `argocd-api`              | True               |                      | The ArgoCD API endpoint
-| `argocd-destination-`     | True               |                      | The k8s namespace into
-  `namespace`
+| `deployment-namespace`    | True               |                      | The k8s namespace to
+                                                                          deploy the app into
 | `helm-config-repo`        | True               |                      | The repo containing the
                                                                           helm chart definiton
 | `values-yaml-directory`   | False              | ./cicd/Deployment/   | Directory containing jinja
@@ -95,7 +95,7 @@ REQUIRED_CONFIG_KEYS = [
     'argocd-username',
     'argocd-password',
     'argocd-api',
-    'argocd-destination-namespace',
+    'deployment-namespace',
     'helm-config-repo'
 ]
 
@@ -219,7 +219,7 @@ class ArgoCD(StepImplementer):
                     '--revision=' + runtime_step_config['helm-config-repo-branch'],
                     '--path=' + runtime_step_config['argocd-helm-chart-path'],
                     '--dest-server=' + runtime_step_config['kube-api-uri'],
-                    '--dest-namespace=' + runtime_step_config['argocd-destination-namespace']
+                    '--dest-namespace=' + runtime_step_config['deployment-namespace']
                 )
             )
 
