@@ -393,7 +393,8 @@ Results output by this step.
                             get('image-url')
             else:
                 print('No image url found in metadata.')
-                raise ValueError('No image url was specified')
+                image_url - 'quay.io/repository/tssc/tssc-tool-argocd'
+                #raise ValueError('No image url was specified')
         return image_url
 
     def _get_image_version(self, runtime_step_config):
