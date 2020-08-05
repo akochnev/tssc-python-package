@@ -257,7 +257,7 @@ Results output by this step.
         sh.git.clone('http://gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git', repo_directory)
 
         # Checkout the correct branch
-
+        sh.cd(repo_directory)
         sh.git.checkout(runtime_step_config['helm-config-repo-branch'])
 
         self._update_values_yaml(repo_directory, runtime_step_config)
