@@ -268,6 +268,7 @@ Results output by this step.
         git_commit_msg = "Configuration Change from TSSC Pipeline. Repository: {repo} Tag: {tag}".\
                           format(repo=git_url, tag=tag)
 
+        sh.git.add('values.yaml')
         sh.git.commit('-am', git_commit_msg)
 
         self._git_tag(tag, git_commit_msg)
@@ -424,10 +425,10 @@ Results output by this step.
 
         template = env.get_template(runtime_step_config['values-yaml-template'])
 
-        with open("values.yml", "w") as out_file:
+        with open("values.yaml", "w") as out_file:
             out_file.writelines(template.render(jinja_runtime_step_config))
 
-        #sh.cp('-f', 'values.yml', repo_directory + '/values.yml') # pylint: disable=no-member
+        #sh.cp('-f', 'values.yaml', repo_directory + '/values.yaml') # pylint: disable=no-member
 
 # register step implementer
 TSSCFactory.register_step_implementer(ArgoCD, True)
