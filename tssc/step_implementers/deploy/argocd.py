@@ -8,10 +8,13 @@ Step configuration expected as input to this step.
 Could come from either configuration file or
 from runtime configuration.
 
-| Configuration Key | Required?          | Default              | Description
-|-------------------|--------------------|----------------------|-----------
-| `key`             | False              |                      |
-
+| Configuration Key    | Required?          | Default              | Description
+|----------------------|--------------------|----------------------|------------------------------
+| values-yaml-directory| False              | ./cicd/Deployment/   | Directory containing jinja
+                                                                     templates
+| value-yaml-template  | False              | values.yaml.j2       | Name of the values yaml jinja
+                                                                     file
+| `key`                | False              |                      |
 
 Expected Previous Step Results
 ------------------------------
@@ -49,7 +52,8 @@ from tssc import StepImplementer
 from tssc import DefaultSteps
 
 DEFAULT_CONFIG = {
-    'values-yaml-template': './values.yaml.j2',
+    'values-yaml-directory': './cicd/Deployment',
+    'values-yaml-template': 'values.yaml.j2',
     'helm-config-repo-branch': 'master',
     'argocd-deployment-check-timeout-seconds': 60,
     'kube-api-uri': 'https://kubernetes.default.svc',
@@ -398,7 +402,7 @@ Results output by this step.
         return image_version
 
     def _update_values_yaml(self, repo_directory, runtime_step_config):
-        env = Environment(loader=FileSystemLoader(repo_directory),
+        env = Environment(loader=FileSystemLoader(runtime_step_config['values-yaml-directory']),
                           trim_blocks=True, lstrip_blocks=True)
 
         version = self._get_image_version(runtime_step_config)
