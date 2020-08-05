@@ -117,8 +117,8 @@ class Skopeo(StepImplementer):
             Results of running this step.
         """
         version = "latest"
-        if(self.get_step_results(DefaultSteps.GENERATE_METADATA) and \
-          self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')):
+        if(self.get_step_results(DefaultSteps.GENERATE_METADATA) and
+           self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')):
             version = self.get_step_results(DefaultSteps.GENERATE_METADATA)['image-tag']
         else:
             print('No version found in metadata. Using latest')
@@ -127,8 +127,8 @@ class Skopeo(StepImplementer):
         service_name = runtime_step_config['service-name']
 
         image_tar_file = ''
-        if(self.get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE) and \
-          self.get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE).get('image-tar-file')):
+        if(self.get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE) and
+           self.get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE).get('image-tar-file')):
             image_tar_file = self.\
             get_step_results(DefaultSteps.CREATE_CONTAINER_IMAGE)['image-tar-file']
         else:
@@ -148,7 +148,9 @@ class Skopeo(StepImplementer):
             raise RuntimeError('Error invoking skopeo: {error}'.format(error=error))
 
         results = {
-            'image-tag' : destination_with_version
+            'image-tag' : destination_with_version,
+            'image-version' : (version).lower(),
+            'image-url' : runtime_step_config['destination']
         }
 
         return results

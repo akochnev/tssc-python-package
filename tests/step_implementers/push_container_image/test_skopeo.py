@@ -112,7 +112,8 @@ class TestStepImplementerPushContainerImageSkopeo(unittest.TestCase):
                     }
                 }
             }
-            expected_step_results = {'tssc-results': { 'create-container-image': {'image-tar-file': destination}, 'generate-metadata': {'image-tag': version }, 'push-container-image': {'image-tag': "{destination}/{application_name}/{service_name}:{version}".format(destination=destination, application_name=application_name, service_name=service_name, version=version)}}}
+            expected_step_results = {'tssc-results': { 'create-container-image': {'image-tar-file': destination}, 'generate-metadata': {'image-tag': version }, 'push-container-image': {'image-tag': "{destination}/{application_name}/{service_name}:{version}".format(destination=destination, application_name=application_name, service_name=service_name, version=version), "image-version" : version, "image-url" : destination }}}
+
             run_step_test_with_result_validation(temp_dir, 'push-container-image', config, expected_step_results)
             skopeo_mock.copy.assert_called_once_with(
                 '--src-tls-verify=true',
