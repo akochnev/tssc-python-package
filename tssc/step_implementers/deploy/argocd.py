@@ -359,7 +359,7 @@ Results output by this step.
             # making this an acceptable work around to the issue since on the off chance
             # actually orverwriting a tag with a different comment, the push will fail
             # because the tag will be attached to a different git hash.
-            sh.git.tag('-a', git_tag_value, '-f -m', git_tag_comment)
+            sh.git.tag('-a', git_tag_value, ' -f -m ', git_tag_comment)
         except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
             raise RuntimeError('Error invoking git tag ' + git_tag_value)
 
