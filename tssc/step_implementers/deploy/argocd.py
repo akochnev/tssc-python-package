@@ -61,7 +61,7 @@ from tssc import StepImplementer
 from tssc import DefaultSteps
 
 DEFAULT_CONFIG = {
-    'values-yaml-directory': './cicd/Deployment',
+    'values-yaml-directory': '../cicd/Deployment',
     'values-yaml-template': 'values.yaml.j2',
     'helm-config-repo-branch': 'master',
     'argocd-sync-timeout-seconds': 60,
