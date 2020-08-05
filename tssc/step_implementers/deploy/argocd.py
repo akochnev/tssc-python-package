@@ -8,13 +8,22 @@ Step configuration expected as input to this step.
 Could come from either configuration file or
 from runtime configuration.
 
-| Configuration Key    | Required?          | Default              | Description
-|----------------------|--------------------|----------------------|------------------------------
-| values-yaml-directory| False              | ./cicd/Deployment/   | Directory containing jinja
-                                                                     templates
-| value-yaml-template  | False              | values.yaml.j2       | Name of the values yaml jinja
-                                                                     file
-| `key`                | False              |                      |
+| Configuration Key         | Required?          | Default              | Description
+|---------------------------|--------------------|----------------------|---------------------------
+| `values-yaml-directory`   | False              | ./cicd/Deployment/   | Directory containing jinja
+                                                                          templates
+| `value-yaml-template`     | False              | values.yaml.j2       | Name of the values yaml
+                                                                          jinja file
+| `helm-config-repo-branch` | False              | master               | The branch to modify
+                                                                          within the helm config
+                                                                          git repo. This is also the
+                                                                          branch argocd will listen
+                                                                          on when the project is
+                                                                          configured.
+| `argocd-sync-timeout-     | False              | 60                   | Number of seconds to wait
+   seconds`                                                               for argocd to sync updates
+
+
 
 Expected Previous Step Results
 ------------------------------
@@ -55,7 +64,7 @@ DEFAULT_CONFIG = {
     'values-yaml-directory': './cicd/Deployment',
     'values-yaml-template': 'values.yaml.j2',
     'helm-config-repo-branch': 'master',
-    'argocd-deployment-check-timeout-seconds': 60,
+    'argocd-sync-timeout-seconds': 60,
     'kube-api-uri': 'https://kubernetes.default.svc',
     'argocd-helm-chart-path': './'
 }
@@ -274,7 +283,8 @@ Results output by this step.
 
         # User argo cli to verify deployment has started (timeout value)
         print(
-            sh.argocd.app.sync(), _out=sys.stdout # pylint: disable=no-member
+            sh.argocd.app.sync('--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
+                               _out=sys.stdout)
         )
 
         results = {
