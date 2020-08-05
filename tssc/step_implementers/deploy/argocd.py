@@ -393,7 +393,7 @@ Results output by this step.
                             get('image-url')
             else:
                 print('No image url found in metadata.')
-                image_url - 'quay.io/repository/tssc/tssc-tool-argocd'
+                image_url = 'quay.io/repository/tssc/tssc-tool-argocd'
                 #raise ValueError('No image url was specified')
         return image_url
 
