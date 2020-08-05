@@ -61,7 +61,7 @@ from tssc import StepImplementer
 from tssc import DefaultSteps
 
 DEFAULT_CONFIG = {
-    'values-yaml-directory': '../cicd/Deployment',
+    'values-yaml-directory': '../cicd/Deployment', #changed for testing
     'values-yaml-template': 'values.yaml.j2',
     'helm-config-repo-branch': 'master',
     'argocd-sync-timeout-seconds': 60,
@@ -254,10 +254,10 @@ Results output by this step.
 
         # TODO Possibly use a temporary directory and remove it afterwards
         repo_directory = "./cloned-repo"
-        sh.git.clone('http://gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git', repo_directory)
+        sh.git.clone('http://gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git', repo_directory) #changed for testing
 
         # Checkout the correct branch
-        sh.cd(repo_directory)
+        sh.cd(repo_directory) #added for testing
         sh.git.checkout(runtime_step_config['helm-config-repo-branch'])
 
         self._update_values_yaml(repo_directory, runtime_step_config)
@@ -427,7 +427,7 @@ Results output by this step.
         with open("values.yml", "w") as out_file:
             out_file.writelines(template.render(jinja_runtime_step_config))
 
-        sh.cp('-f', 'values.yml', repo_directory + '/values.yml') # pylint: disable=no-member
+        #sh.cp('-f', 'values.yml', repo_directory + '/values.yml') # pylint: disable=no-member
 
 # register step implementer
 TSSCFactory.register_step_implementer(ArgoCD, True)
