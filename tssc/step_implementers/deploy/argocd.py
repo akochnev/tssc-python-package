@@ -238,7 +238,6 @@ Results output by this step.
             print(
                 sh.argocd.app.create( # pylint: disable=no-member
                     argocd_app_name,
-                    runtime_step_config['argocd-api'],
                     '--repo=' + runtime_step_config['helm-config-repo'],
                     '--revision=' + runtime_step_config['helm-config-repo-branch'],
                     '--path=' + runtime_step_config['argocd-helm-chart-path'],
@@ -255,7 +254,7 @@ Results output by this step.
 
         # TODO Possibly use a temporary directory and remove it afterwards
         repo_directory = "./cloned-repo"
-        sh.git.clone(runtime_step_config['helm-config-repo'], repo_directory)
+        sh.git.clone('http://gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git', repo_directory)
 
         # Checkout the correct branch
 
