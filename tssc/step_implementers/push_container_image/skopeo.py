@@ -9,7 +9,7 @@ from runtime configuration.
 
 | Configuration Key | Required? | Default  | Description
 |-------------------|-----------|----------|-----------
-| `destination`     | True      |          | Container image repository destination to push image to
+| `destination-url` | True      |          | Container image repository destination to push image to
 | `src-tls-verify`  | True      | `'true'` | Whether to very TLS for source of image
 | `dest-tls-verify` | True      | `'true'` | Whether to verify TLS for destination of image
 
@@ -152,7 +152,7 @@ class Skopeo(StepImplementer):
         results = {
             'image-tag' : destination_with_version,
             'image-version' : (version).lower(),
-            'image-url' : runtime_step_config['destination']
+            'image-url' : runtime_step_config['destination-url']
         }
 
         return results

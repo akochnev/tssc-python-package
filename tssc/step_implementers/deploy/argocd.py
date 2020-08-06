@@ -10,6 +10,15 @@ from runtime configuration.
 
 | Configuration Key         | Required?          | Default              | Description
 |---------------------------|--------------------|----------------------|---------------------------
+| `argocd-username`         | True               |                      | Username for accessing the
+                                                                          ArgoCD API
+| `argocd-password`         | True               |                      | Password for accessing the
+                                                                          ArgoCD API
+| `argocd-api`              | True               |                      | The ArgoCD API endpoint
+| `deployment-namespace`    | True               |                      | The k8s namespace to
+                                                                          deploy the app into
+| `helm-config-repo`        | True               |                      | The repo containing the
+                                                                          helm chart definiton
 | `values-yaml-directory`   | False              | ./cicd/Deployment/   | Directory containing jinja
                                                                           templates
 | `value-yaml-template`     | False              | values.yaml.j2       | Name of the values yaml
@@ -20,36 +29,51 @@ from runtime configuration.
                                                                           branch argocd will listen
                                                                           on when the project is
                                                                           configured.
-| `argocd-sync-timeout-     | False              | 60                   | Number of seconds to wait
-   seconds`                                                               for argocd to sync updates
+| `argocd-sync-timeout-`    | False              | 60                   | Number of seconds to wait
+  `seconds`                                                               for argocd to sync updates
+| `kube-api-url`            | False              | https://kubernetes.  | k8s API endpoint
+                                                   default.svc
+| `argocd-helm-chart-path`  | False              | ./                   | Directory containing the
+                                                                          helm chart definition
+| `git-username`            | False              |                      | If the helm config repo
+                                                                          is accessed via http(s)
+                                                                          this must be supplied
+| `git-password`            | False              |                      | If the helm config repo
+                                                                          is accessed via http(s)
+                                                                          this must be supplied
+| `git-url`                 | False              |                      | Optional explicit
+                                                                          specification of git url
 
 
 
 Expected Previous Step Results
 ------------------------------
 
-Results expected from previous steps that this step may require. If not found, it
-will attempt to tag the source with `latest`
+Results expected from previous steps that this step may require.
 
-| Step Name           | Result Key | Description
-|---------------------|------------|------------
-| `generate-metadata` | ``         |
+| Step Name              | Result Key      | Description
+|------------------------|-----------------|------------
+| `tag-source`           | `tag`           | The git tag to apply to the config repo
+| `push-container-image` | `image-url`     | The image url to use in the deployment
+| `push-container-image` | `image-version` | The image version use in the deployment
 
 Results
 -------
 
 Results output by this step.
 
-| Result Key | Description
-|------------|------------
-| ``         |
+| Result Key            | Description
+|-----------------------|------------
+| `argocd-app-name`     | The argocd app name that was created or updated
+| `config-repo-git-tag` | The git tag applied to the configuration repo for deployment
 
 
 **Example**
 
     'tssc-results': {
         'deploy': {
-            'key': 'value'
+            'argocd-app-name': 'acme-myapp-frontend',
+            'config-repo-git-tag': 'value'
         }
     }
 """
@@ -85,52 +109,8 @@ GIT_AUTHENTICATION_CONFIG = {
 class ArgoCD(StepImplementer):
     """ StepImplementer for the deploy step for ArgoCD.
 
-    This makes extensive use of the python sh library. This was a deliberate choice,
-    as the gitpython library doesn't appear to easily support username/password auth
-    for http and https git repos, and that is a desired use case.
 
-Step Configuration
-------------------
-
-Step configuration expected as input to this step.
-Could come from either configuration file or
-from runtime configuration.
-
-| Configuration Key | Required? | Default | Description
-|-------------------|-----------|---------|-----------
-| `TODO`            | True      |         |
-
-Expected Previous Step Results
-------------------------------
-Results expected from previous steps that this step requires.
-| Step Name | Result Key | Description
-|-----------|------------|------------
-| `TODO`    | `TODO`     | TODO
-
-Results
--------
-
-Results output by this step.
-
-| Result Key | Description
-|------------|------------
-| `TODO`     | TODO
-
-**Example**
-    'tssc-results': {
-        'TODO': {
-            'TODO': ''
-        }
-    }
-
-    Raises
-    ------
-    ValueError
-        If a required parameter is unspecified
-    RuntimeError
-        If git commands fail for any reason
-"""
-
+    """
     @staticmethod
     def step_name():
         """
@@ -213,10 +193,8 @@ Results output by this step.
             Results of running this step.
         """
 
-        ## Checks for git username and password
         self._validate_runtime_step_config(runtime_step_config)
 
-        # Create the argocd project (via argocli) if it doesn't already exist
         print(
             sh.argocd.login( # pylint: disable=no-member
                 runtime_step_config['argocd-api'],
@@ -245,24 +223,21 @@ Results output by this step.
                     '--dest-namespace=' + runtime_step_config['deployment-namespace']
                 )
             )
-        ## argocd app get <APP_NAME> ! exist (argocd app create <APP_NAME> --repo <REPO_URL> \
-         #--revision <BRANCH> --path <PATH> --dest-server https://kubernetes.default.svc \
-         # --dest-namespace <NAMESPACE>)
 
-        # Clone the config repo
         git_url = self._git_url(runtime_step_config)
 
         # TODO Possibly use a temporary directory and remove it afterwards
         repo_directory = "./cloned-repo"
         sh.git.clone('http://gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git', repo_directory) #changed for testing
 
+<<<<<<< HEAD
         # Checkout the correct branch
         sh.cd(repo_directory) #added for testing
+=======
+>>>>>>> c585913b636d0dcb9ac810b960ff0c8dadf0869c
         sh.git.checkout(runtime_step_config['helm-config-repo-branch'])
 
         self._update_values_yaml(repo_directory, runtime_step_config)
-
-        # Commit the change, tag the branch, push the repo
 
         tag = self._get_tag()
         git_commit_msg = "Configuration Change from TSSC Pipeline. Repository: {repo} Tag: {tag}".\
@@ -283,6 +258,7 @@ Results output by this step.
 
         self._git_push(runtime_step_config, "http://{username}:{password}@{url}".format(username=git_username,
                                                                    password=git_password,
+<<<<<<< HEAD
                                                                    url='gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git'))
                                         
 
@@ -290,65 +266,26 @@ Results output by this step.
         sh.rm('-rf', repo_directory)
 
         # User argo cli to verify deployment has started (timeout value)
+=======
+                                                                   url=git_url[7:]))
+>>>>>>> c585913b636d0dcb9ac810b960ff0c8dadf0869c
         print(
             sh.argocd.app.sync(argocd_app_name, '--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
                                _out=sys.stdout)
         )
 
         results = {
-            'argocd_app_name': argocd_app_name,
-            'config_repo_git_tag' : tag
+            'argocd-app-name': argocd_app_name,
+            'config-repo-git-tag' : tag
         }
 
-        # username = None
-        # password = None
-
-        # self._validate_runtime_step_config(runtime_step_config)
-
-        # if any(element in runtime_step_config for element in OPTIONAL_ARGS):
-        #     if(runtime_step_config.get('username') \
-        #       and runtime_step_config.get('password')):
-        #         username = runtime_step_config.get('username')
-        #         password = runtime_step_config.get('password')
-        #     else:
-        #         raise ValueError('Both username and password must have ' \
-        #           'non-empty value in the runtime step configuration')
-        # else:
-        #     print('No username/password found, assuming ssh')
-
-        # tag = self._get_tag()
-        # self._git_tag(tag)
-
-        # image_url = self._get_image_url(runtime_step_config)
-        # image_version = self._get_image_url(runtime_step_config)
-
-        # values_yaml = __main__.parse_yaml_or_json_file(runtime_step_config['values_yaml_file'])
-
-        # git_url = self._git_url(runtime_step_config)
-        # if git_url.startswith('http://'):
-        #     if username and password:
-        #         self._git_push('http://' + username + ':' + password + '@' + git_url[7:])
-        #     else:
-        #         raise ValueError('For a http:// git url, you need to also provide ' \
-        #           'username/password pair')
-        # elif git_url.startswith('https://'):
-        #     if username and password:
-        #         self._git_push('https://' + username + ':' + password + '@' + git_url[8:])
-        #     else:
-        #         raise ValueError('For a https:// git url, you need to also provide ' \
-        #           'username/password pair')
-        # else:
-        #     self._git_push(None)
-        # results = {
-        #     'git_tag' : tag
-        # }
         return results
 
     @staticmethod
     def _git_url(runtime_step_config):
         return_val = None
-        if runtime_step_config.get('git_url'):
-            return_val = runtime_step_config.get('git_url')
+        if runtime_step_config.get('git-url'):
+            return_val = runtime_step_config.get('git-url')
         else:
             try:
                 return_val = sh.git.config(
@@ -384,12 +321,19 @@ Results output by this step.
             raise RuntimeError('Error invoking git push')
 
     def _get_tag(self):
+<<<<<<< HEAD
         tag = 'latest6'
         if(self.get_step_results(DefaultSteps.GENERATE_METADATA) \
           and self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')):
             tag = self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')
+=======
+        tag = 'latest'
+        if(self.get_step_results(DefaultSteps.TAG_SOURCE) \
+          and self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')):
+            tag = self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')
+>>>>>>> c585913b636d0dcb9ac810b960ff0c8dadf0869c
         else:
-            print('No image-tag found in metadata. Using latest')
+            print('No tag found from tag-source step. Using latest')
         return tag
 
     def _get_image_url(self, runtime_step_config):
