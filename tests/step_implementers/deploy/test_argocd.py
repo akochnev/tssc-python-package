@@ -10,20 +10,9 @@ class TestStepImplementerDeployArgoCD(unittest.TestCase):
 
     def test_deploy_git_username_missing(self):
 
-        # TODO Prune the code down for this test case
-        application_name = 'application-name'
-        service_name = 'service-name'
-        organization_name = 'organization-name'
-        git_tag = 'v1.2.3'
-
         with TempDirectory() as temp_dir:
             config = {
                 'tssc-config': {
-                    'global-defaults' : {
-                        'service-name' : service_name,
-                        'application-name' : application_name,
-                        'organization' : organization_name
-                    },
                     'deploy' : {
                         'implementer': 'ArgoCD',
                         'config': {
@@ -31,30 +20,15 @@ class TestStepImplementerDeployArgoCD(unittest.TestCase):
                             'argocd-password' : 'password',
                             'argocd-api' : 'http://argocd.example.com',
                             'deployment-namespace' : 'dev',
-                            'helm-config-repo' : 'http://gitrepo.com/helm-confg-repo.git',
-                            'helm-config-repo-branch' : 'master',
-                            'argocd-sync-timeout-seconds' : '60',
-                            'kube-app-domain' : 'apps.tssc.rht-set.com',
-                            'num-replicas' : '3',
-                            'ingress-enabled' : 'true',
-                            'readiness-probe-path' : '/ready',
-                            'liveness-probe-path' : '/live',
+                            'helm-config-repo' : 'http://gitrepo.com/helm-confg-repo.git'
                         }
                     }
                 }
             }
 
-            expected_step_results = {
-                'tssc-results': {
-                    'deploy': {
-                        'argocd-app-name': '{org}-{service}-{app}'.format(org=organization_name, service=service_name, app=application_name),
-                        'config-repo-git-tag': git_tag
-                    }
-                }
-            }
+            expected_step_results = {}
 
             runtime_args = {
-                #'git-username': 'unit_test_username',
                 'git-password': 'unit_test_password'
             }
 
