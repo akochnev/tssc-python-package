@@ -73,7 +73,7 @@ REQUIRED_CONFIG_KEYS = [
     'argocd-username',
     'argocd-password',
     'argocd-api',
-    'argocd-destination-namespace',
+    'deployment-namespace',
     'helm-config-repo'
 ]
 
@@ -232,7 +232,7 @@ Results output by this step.
                                    service=runtime_step_config['service-name'])
 
         try:
-            print(sh.argocd.app.get(argocd_app_name), _out=sys.stdout) # pylint: disable=no-member
+            print(sh.argocd.app.get(argocd_app_name, _out=sys.stdout)) # pylint: disable=no-member
         except sh.ErrorReturnCode:  # pylint: disable=undefined-variable # pragma: no cover
             print('No app found, creating a new app...')
             print(
@@ -242,7 +242,7 @@ Results output by this step.
                     '--revision=' + runtime_step_config['helm-config-repo-branch'],
                     '--path=' + runtime_step_config['argocd-helm-chart-path'],
                     '--dest-server=' + runtime_step_config['kube-api-uri'],
-                    '--dest-namespace=' + runtime_step_config['argocd-destination-namespace']
+                    '--dest-namespace=' + runtime_step_config['deployment-namespace']
                 )
             )
         ## argocd app get <APP_NAME> ! exist (argocd app create <APP_NAME> --repo <REPO_URL> \
@@ -274,16 +274,24 @@ Results output by this step.
         self._git_tag(tag, git_commit_msg)
 
         # TODO See the code in tag_source/git.py for retrieving username/password and handling ssh
-        git_username = None
-        git_password = None
+        git_username = 'akim'
+        git_password = 'Sk779vga.96'
 
-        self._git_push("http://{username}:{password}@{url}".format(username=git_username,
+        #self._git_push("http://{username}:{password}@{url}".format(username=git_username,
+        #                                                           password=git_password,
+        #                                                           url=git_url[7:]))    #runtime_step_config['helm-config-repo']
+
+        self._git_push(runtime_step_config, "http://{username}:{password}@{url}".format(username=git_username,
                                                                    password=git_password,
-                                                                   url=git_url[7:]))
+                                                                   url='gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git'))
+                                        
+
+        sh.cd('..')
+        sh.rm('-rf', repo_directory)
 
         # User argo cli to verify deployment has started (timeout value)
         print(
-            sh.argocd.app.sync('--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
+            sh.argocd.app.sync(argocd_app_name, '--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
                                _out=sys.stdout)
         )
 
@@ -359,22 +367,24 @@ Results output by this step.
             # making this an acceptable work around to the issue since on the off chance
             # actually orverwriting a tag with a different comment, the push will fail
             # because the tag will be attached to a different git hash.
-            sh.git.tag('-a', git_tag_value, ' -f -m ', git_tag_comment)
+            sh.git.tag('-a', git_tag_value, '-f', '-m', git_tag_comment)
         except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
             raise RuntimeError('Error invoking git tag ' + git_tag_value)
 
     @staticmethod
-    def _git_push(url=None): # pragma: no cover
+    def _git_push(runtime_step_config, url=None): # pragma: no cover
         try:
             if url:
-                sh.git.push(url, '--tag')
+                sh.git.push(url, runtime_step_config['helm-config-repo-branch'])
+                sh.git.push(url, '--tags')
             else:
-                sh.git.push('--tag')
+                sh.git.push(runtime_step_config['helm-config-repo-branch'])
+                sh.git.push('--tags')
         except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
             raise RuntimeError('Error invoking git push')
 
     def _get_tag(self):
-        tag = 'latest'
+        tag = 'latest6'
         if(self.get_step_results(DefaultSteps.GENERATE_METADATA) \
           and self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')):
             tag = self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')
