@@ -41,6 +41,8 @@ from runtime configuration.
 | `git-password`            | False              |                      | If the helm config repo
                                                                           is accessed via http(s)
                                                                           this must be supplied
+| `git-url`                 | False              |                      | Optional explicit
+                                                                          specification of git url
 
 
 
@@ -208,7 +210,7 @@ class ArgoCD(StepImplementer):
                                    service=runtime_step_config['service-name'])
 
         try:
-            print(sh.argocd.app.get(argocd_app_name), _out=sys.stdout) # pylint: disable=no-member
+            print(sh.argocd.app.get(argocd_app_name, _out=sys.stdout)) # pylint: disable=no-member
         except sh.ErrorReturnCode:  # pylint: disable=undefined-variable # pragma: no cover
             print('No app found, creating a new app...')
             print(
@@ -263,8 +265,8 @@ class ArgoCD(StepImplementer):
     @staticmethod
     def _git_url(runtime_step_config):
         return_val = None
-        if runtime_step_config.get('git_url'):
-            return_val = runtime_step_config.get('git_url')
+        if runtime_step_config.get('git-url'):
+            return_val = runtime_step_config.get('git-url')
         else:
             try:
                 return_val = sh.git.config(
