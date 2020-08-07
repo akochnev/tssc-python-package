@@ -87,7 +87,7 @@ from tssc import DefaultSteps
 from tssc.step_implementers.tag_source import Git
 
 DEFAULT_CONFIG = {
-    'values-yaml-directory': '../cicd/Deployment', #changed for testing
+    'values-yaml-directory': './cicd/Deployment',
     'values-yaml-template': 'values.yaml.j2',
     'helm-config-repo-branch': 'master',
     'argocd-sync-timeout-seconds': 60,
@@ -115,7 +115,7 @@ class _GitTagPushCode(Git):
     """
 
     @staticmethod
-    def _git_push(url=None):  # pragma: no cover
+    def _git_push(url=None):
 
         try:
             if url:
@@ -246,7 +246,7 @@ class ArgoCD(StepImplementer):
 
         try:
             print(sh.argocd.app.get(argocd_app_name, _out=sys.stdout)) # pylint: disable=no-member
-        except sh.ErrorReturnCode:  # pylint: disable=undefined-variable # pragma: no cover
+        except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
             print('No app found, creating a new app...')
             print(
                 sh.argocd.app.create( # pylint: disable=no-member
