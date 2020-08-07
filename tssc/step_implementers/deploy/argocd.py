@@ -328,8 +328,7 @@ class ArgoCD(StepImplementer):
                             get('image-url')
             else:
                 print('No image url found in metadata.')
-                image_url = 'quay.io/repository/tssc/tssc-tool-argocd'
-                #raise ValueError('No image url was specified')
+                raise ValueError('No image url was specified')
         return image_url
 
     def _get_image_version(self, runtime_step_config):
@@ -362,7 +361,7 @@ class ArgoCD(StepImplementer):
         with open("values.yaml", "w") as out_file:
             out_file.writelines(template.render(jinja_runtime_step_config))
 
-        #sh.cp('-f', 'values.yaml', repo_directory + '/values.yaml') # pylint: disable=no-member
+        sh.cp('-f', 'values.yaml', repo_directory + '/values.yaml') # pylint: disable=no-member
 
 # register step implementer
 TSSCFactory.register_step_implementer(ArgoCD, True)
