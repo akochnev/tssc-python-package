@@ -6,6 +6,12 @@ from unittest.mock import patch
 from test_utils import *
 from tssc.step_implementers.tag_source import Git
 
+def Any(cls):
+    class Any(cls):
+        def __eq__(self, other):
+            return True
+    return Any()
+
 class TestStepImplementerDeployArgoCD(unittest.TestCase):
 
     def test_deploy_git_username_missing(self):
