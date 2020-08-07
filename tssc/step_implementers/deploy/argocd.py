@@ -81,6 +81,7 @@ Results output by this step.
 import sys
 import tempfile
 import sh
+import os # TODO Remove
 from jinja2 import Environment, FileSystemLoader
 from tssc import TSSCFactory
 from tssc import StepImplementer
@@ -289,8 +290,9 @@ class ArgoCD(StepImplementer):
                                                 repo_directory)
             runtime_step_config['username'] = runtime_step_config['git-username']
             runtime_step_config['password'] = runtime_step_config['git-password']
-            git_result = git_tag_push_code._run_step(runtime_step_config)  # pylint: disable=protected-access
-            print(git_result)
+
+            os.chdir(repo_directory)
+            git_tag_push_code._run_step(runtime_step_config)  # pylint: disable=protected-access
 
         print(
             sh.argocd.app.sync('--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
