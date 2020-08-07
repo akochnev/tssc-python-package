@@ -285,29 +285,6 @@ class ArgoCD(StepImplementer):
 
         return results
 
-    @staticmethod
-    def _git_url(runtime_step_config):
-        return_val = None
-        if runtime_step_config.get('git-url'):
-            return_val = runtime_step_config.get('git-url')
-        else:
-            try:
-                return_val = sh.git.config(
-                    '--get',
-                    'remote.origin.url').stdout.decode("utf-8").rstrip()
-            except sh.ErrorReturnCode:  # pylint: disable=undefined-variable # pragma: no cover
-                raise RuntimeError('Error invoking git config --get remote.origin.url')
-        return return_val
-
-    def _get_tag(self):
-        tag = 'latest'
-        if(self.get_step_results(DefaultSteps.TAG_SOURCE) \
-          and self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')):
-            tag = self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')
-        else:
-            print('No tag found from tag-source step. Using latest')
-        return tag
-
     def _get_image_url(self, runtime_step_config):
         image_url = None
 
