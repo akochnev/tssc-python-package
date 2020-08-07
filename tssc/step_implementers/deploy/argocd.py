@@ -364,33 +364,33 @@ class ArgoCD(StepImplementer):
             print('No version found in metadata. Using latest')
         return tag
 
-@staticmethod
-def _git_push(repo_directory, url=None):
+    @staticmethod
+    def _git_push(repo_directory, url=None):
 
-    try:
-        if url:
-            sh.git.push(
-                url,
-                '--tag',
-                _out=sys.stdout,
-                _cwd=repo_directory
-            )
-            sh.git.push(
-                url,
-                _out=sys.stdout,
-                _cwd=repo_directory
-            )
-        else:
-            sh.git.push(
-                '--tag',
-                _out=sys.stdout,
-                _cwd=repo_directory
-            )
-            sh.git.push(
-                url,
-                _out=sys.stdout,
-                _cwd=repo_directory
-            )
+        try:
+            if url:
+                sh.git.push(
+                    url,
+                    '--tag',
+                    _out=sys.stdout,
+                    _cwd=repo_directory
+                )
+                sh.git.push(
+                    url,
+                    _out=sys.stdout,
+                    _cwd=repo_directory
+                )
+            else:
+                sh.git.push(
+                    '--tag',
+                    _out=sys.stdout,
+                    _cwd=repo_directory
+                )
+                sh.git.push(
+                    url,
+                    _out=sys.stdout,
+                    _cwd=repo_directory
+                )
 
     @staticmethod
     def _git_url(runtime_step_config):
