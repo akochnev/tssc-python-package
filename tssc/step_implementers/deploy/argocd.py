@@ -368,6 +368,8 @@ class ArgoCD(StepImplementer):
                     _out=sys.stdout,
                     _cwd=repo_directory
                 )
+        except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
+            raise RuntimeError('Error invoking git push')
 
     @staticmethod
     def _git_url(runtime_step_config):
