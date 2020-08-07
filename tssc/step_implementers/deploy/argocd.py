@@ -274,8 +274,8 @@ class ArgoCD(StepImplementer):
             git_commit_msg = "Configuration Change from TSSC Pipeline. Repository: " +\
                              "{repo} Tag: {tag}".format(repo=git_url, tag=tag)
 
-            sh.git.config('user.email', runtime_step_config['git-email'])
-            sh.git.config('user.name', runtime_step_config['git-friendly-name'])
+            sh.git.config('--global', 'user.email', runtime_step_config['git-email'])
+            sh.git.config('--global', 'user.name', runtime_step_config['git-friendly-name'])
 
             sh.git.commit('-am', git_commit_msg, _cwd=repo_directory)
 
