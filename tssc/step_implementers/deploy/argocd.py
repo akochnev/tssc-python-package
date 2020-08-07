@@ -258,7 +258,8 @@ class ArgoCD(StepImplementer):
                     '--revision=' + runtime_step_config['helm-config-repo-branch'],
                     '--path=' + runtime_step_config['argocd-helm-chart-path'],
                     '--dest-server=' + runtime_step_config['kube-api-uri'],
-                    '--dest-namespace=' + runtime_step_config['deployment-namespace']
+                    '--dest-namespace=' + runtime_step_config['deployment-namespace'],
+                    _out=sys.stdout
                 )
             )
 
@@ -288,7 +289,8 @@ class ArgoCD(StepImplementer):
                                                 repo_directory)
             runtime_step_config['username'] = runtime_step_config['git-username']
             runtime_step_config['password'] = runtime_step_config['git-password']
-            git_tag_push_code._run_step(runtime_step_config)  # pylint: disable=protected-access
+            git_result = git_tag_push_code._run_step(runtime_step_config)  # pylint: disable=protected-access
+            print(git_result)
 
         print(
             sh.argocd.app.sync('--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
