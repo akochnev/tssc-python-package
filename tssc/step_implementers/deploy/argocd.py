@@ -230,11 +230,9 @@ class ArgoCD(StepImplementer):
         repo_directory = "./cloned-repo"
         sh.git.clone('http://gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git', repo_directory) #changed for testing
 
-<<<<<<< HEAD
         # Checkout the correct branch
         sh.cd(repo_directory) #added for testing
-=======
->>>>>>> c585913b636d0dcb9ac810b960ff0c8dadf0869c
+
         sh.git.checkout(runtime_step_config['helm-config-repo-branch'])
 
         self._update_values_yaml(repo_directory, runtime_step_config)
@@ -249,8 +247,8 @@ class ArgoCD(StepImplementer):
         self._git_tag(tag, git_commit_msg)
 
         # TODO See the code in tag_source/git.py for retrieving username/password and handling ssh
-        git_username = 'akim'
-        git_password = 'Sk779vga.96'
+        git_username = None
+        git_password = None
 
         #self._git_push("http://{username}:{password}@{url}".format(username=git_username,
         #                                                           password=git_password,
@@ -258,7 +256,6 @@ class ArgoCD(StepImplementer):
 
         self._git_push(runtime_step_config, "http://{username}:{password}@{url}".format(username=git_username,
                                                                    password=git_password,
-<<<<<<< HEAD
                                                                    url='gitea.tssc.rht-set.com/tssc-references/tssc-reference-app-quarkus-rest-json-config.git'))
                                         
 
@@ -266,9 +263,7 @@ class ArgoCD(StepImplementer):
         sh.rm('-rf', repo_directory)
 
         # User argo cli to verify deployment has started (timeout value)
-=======
-                                                                   url=git_url[7:]))
->>>>>>> c585913b636d0dcb9ac810b960ff0c8dadf0869c
+
         print(
             sh.argocd.app.sync(argocd_app_name, '--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
                                _out=sys.stdout)
@@ -321,17 +316,10 @@ class ArgoCD(StepImplementer):
             raise RuntimeError('Error invoking git push')
 
     def _get_tag(self):
-<<<<<<< HEAD
-        tag = 'latest6'
-        if(self.get_step_results(DefaultSteps.GENERATE_METADATA) \
-          and self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')):
-            tag = self.get_step_results(DefaultSteps.GENERATE_METADATA).get('image-tag')
-=======
         tag = 'latest'
         if(self.get_step_results(DefaultSteps.TAG_SOURCE) \
           and self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')):
             tag = self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')
->>>>>>> c585913b636d0dcb9ac810b960ff0c8dadf0869c
         else:
             print('No tag found from tag-source step. Using latest')
         return tag
