@@ -292,7 +292,7 @@ class ArgoCD(StepImplementer):
             runtime_step_config['password'] = runtime_step_config['git-password']
 
             os.chdir(repo_directory)
-            git_tag_push_code._run_step(runtime_step_config)  # pylint: disable=protected-access
+            git_tag_push_code.run_step(runtime_step_config)  # pylint: disable=protected-access
 
         print(
             sh.argocd.app.sync('--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
