@@ -112,39 +112,6 @@ GIT_AUTHENTICATION_CONFIG = {
     'git-password': None
 }
 
-class _GitTagPushCode(Git):
-    """ Internal class for pushing code to Git. Extends from the
-        tag-source implementer for Git
-
-    """
-
-    @staticmethod
-    def _git_push(url=None):
-
-        try:
-            if url:
-                sh.git.push(
-                    url,
-                    '--tag',
-                    _out=sys.stdout
-                )
-                sh.git.push(
-                    url,
-                    _out=sys.stdout
-                )
-            else:
-                sh.git.push(
-                    '--tag',
-                    _out=sys.stdout
-                )
-                sh.git.push(
-                    url,
-                    _out=sys.stdout
-                )
-
-        except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
-            raise RuntimeError('Error invoking git push')
-
 class ArgoCD(StepImplementer):
     """ StepImplementer for the deploy step for ArgoCD.
 
@@ -285,14 +252,25 @@ class ArgoCD(StepImplementer):
             print(sh.git.commit('-am', git_commit_msg, _cwd=repo_directory,
                                  _out=sys.stdout))
 
-            git_tag_push_code = _GitTagPushCode(self._StepImplementer__results_dir_path, # pylint: disable=no-member
-                                                self._StepImplementer__results_file_name, # pylint: disable=no-member
-                                                repo_directory)
-            runtime_step_config['username'] = runtime_step_config['git-username']
-            runtime_step_config['password'] = runtime_step_config['git-password']
+            # TODO START Update this code to match what is in git.py
+            print(sh.git.tag('-f', self._get_tag(), _cwd=repo_directory,
+                                 _out=sys.stdout))
 
-            os.chdir(repo_directory)
-            git_tag_push_code.run_step(runtime_step_config)  # pylint: disable=protected-access
+            git_url = self._git_url(runtime_step_config)
+
+            self._git_push(repo_directory, 'http://' + runtime_step_config['git-username'] + ':' +
+                           runtime_step_config['git-password'] + '@' + git_url[7:])
+
+            # TODO END
+
+            # git_tag_push_code = _GitTagPushCode(self._StepImplementer__results_dir_path, # pylint: disable=no-member
+            #                                     self._StepImplementer__results_file_name, # pylint: disable=no-member
+            #                                     repo_directory)
+            # runtime_step_config['username'] = runtime_step_config['git-username']
+            # runtime_step_config['password'] = runtime_step_config['git-password']
+
+            # os.chdir(repo_directory)
+            # git_tag_push_code.run_step(runtime_step_config)  # pylint: disable=protected-access
 
         print(
             sh.argocd.app.sync('--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
@@ -376,6 +354,63 @@ class ArgoCD(StepImplementer):
             out_file.writelines(template.render(jinja_runtime_step_config))
 
         sh.cp('-f', 'values.yaml', repo_directory + '/values.yaml') # pylint: disable=no-member
+
+    def _get_tag(self):
+        tag = 'latest'
+        if(self.get_step_results(DefaultSteps.GENERATE_METADATA) \
+          and self.get_step_results(DefaultSteps.GENERATE_METADATA).get('version')):
+            tag = self.get_step_results(DefaultSteps.GENERATE_METADATA).get('version')
+        else:
+            print('No version found in metadata. Using latest')
+        return tag
+
+@staticmethod
+def _git_push(repo_directory, url=None):
+
+    try:
+        if url:
+            sh.git.push(
+                url,
+                '--tag',
+                _out=sys.stdout,
+                _cwd=repo_directory
+            )
+            sh.git.push(
+                url,
+                _out=sys.stdout,
+                _cwd=repo_directory
+            )
+        else:
+            sh.git.push(
+                '--tag',
+                _out=sys.stdout,
+                _cwd=repo_directory
+            )
+            sh.git.push(
+                url,
+                _out=sys.stdout,
+                _cwd=repo_directory
+            )
+
+    @staticmethod
+    def _git_url(runtime_step_config):
+        return_val = None
+        if runtime_step_config.get('url'):
+            return_val = runtime_step_config.get('url')
+        else:
+            try:
+                return_val = sh.git.config(
+                    '--get',
+                    'remote.origin.url',
+                    _out=sys.stdout,
+                    _tee=True,
+                    _encoding='UTF-8',
+                    _decode_errors='ignore'
+                    ).rstrip()
+
+            except sh.ErrorReturnCode:  # pylint: disable=undefined-variable # pragma: no cover
+                raise RuntimeError('Error invoking git config --get remote.origin.url')
+        return return_val
 
 # register step implementer
 TSSCFactory.register_step_implementer(ArgoCD, True)
