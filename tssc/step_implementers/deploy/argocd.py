@@ -87,7 +87,7 @@ from tssc import DefaultSteps
 from tssc.step_implementers.tag_source import Git
 
 DEFAULT_CONFIG = {
-    'values-yaml-directory': './cicd/Deployment',
+    'values-yaml-directory': '../cicd/Deployment', #changed for testing
     'values-yaml-template': 'values.yaml.j2',
     'helm-config-repo-branch': 'master',
     'argocd-sync-timeout-seconds': 60,
@@ -251,7 +251,6 @@ class ArgoCD(StepImplementer):
             print(
                 sh.argocd.app.create( # pylint: disable=no-member
                     argocd_app_name,
-                    runtime_step_config['argocd-api'],
                     '--repo=' + runtime_step_config['helm-config-repo'],
                     '--revision=' + runtime_step_config['helm-config-repo-branch'],
                     '--path=' + runtime_step_config['argocd-helm-chart-path'],
@@ -329,7 +328,8 @@ class ArgoCD(StepImplementer):
                             get('image-url')
             else:
                 print('No image url found in metadata.')
-                raise ValueError('No image url was specified')
+                image_url = 'quay.io/repository/tssc/tssc-tool-argocd'
+                #raise ValueError('No image url was specified')
         return image_url
 
     def _get_image_version(self, runtime_step_config):
@@ -359,10 +359,10 @@ class ArgoCD(StepImplementer):
 
         template = env.get_template(runtime_step_config['values-yaml-template'])
 
-        with open("values.yml", "w") as out_file:
+        with open("values.yaml", "w") as out_file:
             out_file.writelines(template.render(jinja_runtime_step_config))
 
-        sh.cp('-f', 'values.yml', repo_directory + '/values.yml') # pylint: disable=no-member
+        #sh.cp('-f', 'values.yaml', repo_directory + '/values.yaml') # pylint: disable=no-member
 
 # register step implementer
 TSSCFactory.register_step_implementer(ArgoCD, True)
