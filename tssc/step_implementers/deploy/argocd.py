@@ -43,7 +43,8 @@ from runtime configuration.
                                                                           this must be supplied
 | `git-url`                 | False              |                      | Optional explicit
                                                                           specification of git url
-
+| `git-email`               | False              |                      | Git email for commit
+| `git-friendly-name`       | False              |                      | Git name for commit
 
 
 Expected Previous Step Results
@@ -92,7 +93,9 @@ DEFAULT_CONFIG = {
     'helm-config-repo-branch': 'master',
     'argocd-sync-timeout-seconds': 60,
     'kube-api-uri': 'https://kubernetes.default.svc',
-    'argocd-helm-chart-path': './'
+    'argocd-helm-chart-path': './',
+    'git-email': 'napsspo+tssc@redhat.com',
+    'git-friendly-name': 'TSSC'
 }
 
 REQUIRED_CONFIG_KEYS = [
@@ -270,6 +273,9 @@ class ArgoCD(StepImplementer):
             tag = self._get_tag()
             git_commit_msg = "Configuration Change from TSSC Pipeline. Repository: " +\
                              "{repo} Tag: {tag}".format(repo=git_url, tag=tag)
+
+            sh.git.config('user.email', runtime_step_config['git-email'])
+            sh.git.config('user.name', runtime_step_config['git-friendly-name'])
 
             sh.git.commit('-am', git_commit_msg, _cwd=repo_directory)
 
