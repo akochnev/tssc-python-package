@@ -43,8 +43,9 @@ from runtime configuration.
                                                                           this must be supplied
 | `git-url`                 | False              |                      | Optional explicit
                                                                           specification of git url
-| `git-email`               | False              |                      | Git email for commit
-| `git-friendly-name`       | False              |                      | Git name for commit
+| `git-email`               | False              | napsspo+tssc@\       | Git email for commit
+                                                   redhat.com
+| `git-friendly-name`       | False              | TSSC                 | Git name for commit
 
 
 Expected Previous Step Results
@@ -93,7 +94,7 @@ DEFAULT_CONFIG = {
     'argocd-sync-timeout-seconds': 60,
     'kube-api-uri': 'https://kubernetes.default.svc',
     'argocd-helm-chart-path': './',
-    'git-email': 'napsspo+tssc@redhat.com',
+    'git-email': 'c',
     'git-friendly-name': 'TSSC'
 }
 
@@ -309,7 +310,7 @@ class ArgoCD(StepImplementer):
         version = self._get_image_version(runtime_step_config)
         url = self._get_image_url(runtime_step_config)
 
-        jinja_runtime_step_config = {'image-url' : url, 'image-version' : version}
+        jinja_runtime_step_config = {'image_url' : url, 'image_version' : version}
         for key in runtime_step_config:
             jinja_runtime_step_config[key.replace('-', '_')] = runtime_step_config[key]
 
