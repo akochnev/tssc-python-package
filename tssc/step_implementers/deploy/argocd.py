@@ -256,10 +256,10 @@ class ArgoCD(StepImplementer):
                 print(sh.git.tag('-f', self._get_tag(), _cwd=repo_directory,
                                  _out=sys.stdout))
 
-                self._process_git_push(repo_directory, runtime_step_config)
-
-            except Exception:
+            except sh.ErrorReturnCode: # pylint: disable=undefined-variable
                 raise RuntimeError("Unexpected error executing Git commands")
+
+            self._process_git_push(repo_directory, runtime_step_config)
 
         print(
             sh.argocd.app.sync('--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
@@ -349,7 +349,7 @@ class ArgoCD(StepImplementer):
         else:
             print('No username/password found, assuming ssh')
         tag = self._get_tag()
-        self._git_tag(tag)
+        self._git_tag(repo_directory, tag)
         git_url = self._git_url(runtime_step_config)
         if git_url.startswith('http://'):
             if username and password:
@@ -408,7 +408,7 @@ class ArgoCD(StepImplementer):
             raise RuntimeError('Error invoking git push')
 
     @staticmethod
-    def _git_tag(git_tag_value):  # pragma: no cover
+    def _git_tag(repo_directory, git_tag_value):  # pragma: no cover
         try:
             # NOTE:
             # this force is only needed locally in case of a re-reun of the same pipeline
@@ -419,7 +419,8 @@ class ArgoCD(StepImplementer):
             sh.git.tag(  # pylint: disable=no-member
                 git_tag_value,
                 '-f',
-                _out=sys.stdout
+                _out=sys.stdout,
+                _cwd=repo_directory
             )
         except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
             raise RuntimeError('Error invoking git tag ' + git_tag_value)
