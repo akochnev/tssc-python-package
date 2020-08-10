@@ -339,8 +339,8 @@ class ArgoCD(StepImplementer):
         if any(element in runtime_step_config for element in GIT_AUTHENTICATION_CONFIG):
             if(runtime_step_config.get('git-username') \
             and runtime_step_config.get('git-password')):
-                username = runtime_step_config.get('username')
-                password = runtime_step_config.get('password')
+                username = runtime_step_config.get('git-username')
+                password = runtime_step_config.get('git-password')
             else:
                 raise ValueError(
                     'Both username and password must have ' \
