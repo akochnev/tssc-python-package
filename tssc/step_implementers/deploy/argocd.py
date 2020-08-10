@@ -323,7 +323,7 @@ class ArgoCD(StepImplementer):
 
     def _get_tag(self):
         tag = 'latest'
-        if(self.get_step_results(DefaultSteps.TAG_SOURCE \
+        if(self.get_step_results(DefaultSteps.TAG_SOURCE) \
           and self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')):
             tag = self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')
         else:
