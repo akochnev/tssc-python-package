@@ -256,13 +256,7 @@ class ArgoCD(StepImplementer):
                 print(sh.git.tag('-f', self._get_tag(), _cwd=repo_directory,
                                  _out=sys.stdout))
 
-                git_url = self._git_url(runtime_step_config)
-
-                # TODO Replace with logic in git.py
-                self._git_push(repo_directory, 'http://{username}:{password}@{url}'.format(
-                    username=runtime_step_config['git-username'],
-                    password=runtime_step_config['git-password'],
-                    url=git_url[7:]))
+                self._process_git_push(repo_directory, runtime_step_config)
 
             except Exception:
                 raise RuntimeError("Unexpected error executing Git commands")
@@ -335,6 +329,53 @@ class ArgoCD(StepImplementer):
         else:
             print('No version found in metadata. Using latest')
         return tag
+
+    def _process_git_push(self, repo_directory, runtime_step_config):
+        git_url = self._git_url(runtime_step_config)
+
+        username = None
+        password = None
+
+        if any(element in runtime_step_config for element in GIT_AUTHENTICATION_CONFIG):
+            if(runtime_step_config.get('git-username') \
+            and runtime_step_config.get('git-password')):
+                username = runtime_step_config.get('username')
+                password = runtime_step_config.get('password')
+            else:
+                raise ValueError(
+                    'Both username and password must have ' \
+                    'non-empty value in the runtime step configuration'
+                )
+        else:
+            print('No username/password found, assuming ssh')
+        tag = self._get_tag()
+        self._git_tag(tag)
+        git_url = self._git_url(runtime_step_config)
+        if git_url.startswith('http://'):
+            if username and password:
+                self._git_push(repo_directory, 'http://{username}:{password}@{url}'.format(
+                    username=username,
+                    password=password,
+                    url=git_url[7:]))
+            else:
+                raise ValueError(
+                    'For a http:// git url, you need to also provide ' \
+                    'username/password pair'
+                )
+        elif git_url.startswith('https://'):
+            if username and password:
+                self._git_push(repo_directory, 'http://{username}:{password}@{url}'.format(
+                    username=username,
+                    password=password,
+                    url=git_url[8:]))
+
+            else:
+                raise ValueError(
+                    'For a https:// git url, you need to also provide ' \
+                    'username/password pair'
+                )
+        else:
+            self._git_push(repo_directory, None)
 
     @staticmethod
     def _git_push(repo_directory, url=None):
