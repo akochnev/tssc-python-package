@@ -232,7 +232,7 @@ class ArgoCD(StepImplementer):
 
         with tempfile.TemporaryDirectory() as repo_directory:
             try:
-                git_url = self._git_url(repo_directory, runtime_step_config)
+                git_url = self._git_url(runtime_step_config)
                 sh.git.clone(runtime_step_config['helm-config-repo'], repo_directory)
                 sh.git.checkout(runtime_step_config['helm-config-repo-branch'],
                                 _cwd=repo_directory)
@@ -348,7 +348,7 @@ class ArgoCD(StepImplementer):
             print('No username/password found, assuming ssh')
         tag = self._get_tag()
         self._git_tag(repo_directory, tag)
-        git_url = self._git_url(repo_directory, runtime_step_config)
+        git_url = self._git_url(runtime_step_config)
         if git_url.startswith('http://'):
             if username and password:
                 self._git_push(repo_directory, 'http://{username}:{password}@{url}'.format(
@@ -412,7 +412,7 @@ class ArgoCD(StepImplementer):
             # this force is only needed locally in case of a re-reun of the same pipeline
             # without a fresh check out. You will notice there is no force on the push
             # making this an acceptable work around to the issue since on the off chance
-            # actually orverwriting a tag with a different comment, the push will fail
+            # actually overwriting a tag with a different comment, the push will fail
             # because the tag will be attached to a different git hash.
             sh.git.tag(  # pylint: disable=no-member
                 git_tag_value,
@@ -424,25 +424,8 @@ class ArgoCD(StepImplementer):
             raise RuntimeError('Error invoking git tag ' + git_tag_value)
 
     @staticmethod
-    def _git_url(repo_directory, runtime_step_config):
-        return_val = None
-        if runtime_step_config.get('helm-config-repo'):
-            return_val = runtime_step_config.get('helm-config-repo')
-        else:
-            try:
-                return_val = sh.git.config(
-                    '--get',
-                    'remote.origin.url',
-                    _out=sys.stdout,
-                    _tee=True,
-                    _encoding='UTF-8',
-                    _decode_errors='ignore',
-                    _cwd=repo_directory
-                    ).rstrip()
-
-            except sh.ErrorReturnCode:  # pylint: disable=undefined-variable # pragma: no cover
-                raise RuntimeError('Error invoking git config --get remote.origin.url')
-        return return_val
+    def _git_url(runtime_step_config):
+        return runtime_step_config.get('helm-config-repo')
 
 # register step implementer
 TSSCFactory.register_step_implementer(ArgoCD, True)

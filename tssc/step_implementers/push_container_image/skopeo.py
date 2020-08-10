@@ -143,7 +143,7 @@ class Skopeo(StepImplementer):
                 '--src-tls-verify=' + runtime_step_config['src-tls-verify'],
                 '--dest-tls-verify=' + runtime_step_config['dest-tls-verify'],
                 'docker-archive:' + image_tar_file,
-                destination_with_version,
+                'docker://' + destination_with_version,
                 _out=sys.stdout
             )
         except sh.ErrorReturnCode as error:  # pylint: disable=undefined-variable
