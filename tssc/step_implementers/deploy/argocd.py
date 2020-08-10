@@ -323,9 +323,9 @@ class ArgoCD(StepImplementer):
 
     def _get_tag(self):
         tag = 'latest'
-        if(self.get_step_results(DefaultSteps.GENERATE_METADATA) \
-          and self.get_step_results(DefaultSteps.GENERATE_METADATA).get('version')):
-            tag = self.get_step_results(DefaultSteps.GENERATE_METADATA).get('version')
+        if(self.get_step_results(DefaultSteps.TAG_SOURCE \
+          and self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')):
+            tag = self.get_step_results(DefaultSteps.TAG_SOURCE).get('tag')
         else:
             print('No version found in metadata. Using latest')
         return tag
