@@ -81,12 +81,10 @@ Results output by this step.
 import sys
 import tempfile
 import sh
-import os # TODO Remove
 from jinja2 import Environment, FileSystemLoader
 from tssc import TSSCFactory
 from tssc import StepImplementer
 from tssc import DefaultSteps
-from tssc.step_implementers.tag_source import Git
 
 DEFAULT_CONFIG = {
     'values-yaml-directory': './cicd/Deployment',
@@ -234,43 +232,40 @@ class ArgoCD(StepImplementer):
         git_url = self._git_url(runtime_step_config)
 
         with tempfile.TemporaryDirectory() as repo_directory:
-            sh.git.clone(runtime_step_config['helm-config-repo'], repo_directory)
-            sh.git.checkout(runtime_step_config['helm-config-repo-branch'], _cwd=repo_directory)
+            try:
+                sh.git.clone(runtime_step_config['helm-config-repo'], repo_directory)
+                sh.git.checkout(runtime_step_config['helm-config-repo-branch'],
+                                _cwd=repo_directory)
 
-            self._update_values_yaml(repo_directory, runtime_step_config)
+                self._update_values_yaml(repo_directory, runtime_step_config)
 
-            tag = self._get_tag()
-            git_commit_msg = "Configuration Change from TSSC Pipeline. Repository: " +\
-                             "{repo} Tag: {tag}".format(repo=git_url, tag=tag)
+                tag = self._get_tag()
+                git_commit_msg = 'Configuration Change from TSSC Pipeline. Repository: ' +\
+                                 '{repo} Tag: {tag}'.format(repo=git_url, tag=tag)
 
-            print(sh.git.config('--global', 'user.email', runtime_step_config['git-email'],
-                                _out=sys.stdout))
+                print(sh.git.config('--global', 'user.email', runtime_step_config['git-email'],
+                                    _out=sys.stdout))
 
-            print(sh.git.config('--global', 'user.name', runtime_step_config['git-friendly-name'],
-                                _out=sys.stdout))
+                print(sh.git.config('--global', 'user.name',
+                                    runtime_step_config['git-friendly-name'],
+                                    _out=sys.stdout))
 
-            print(sh.git.commit('-am', git_commit_msg, _cwd=repo_directory,
+                print(sh.git.commit('-am', git_commit_msg, _cwd=repo_directory,
+                                    _out=sys.stdout))
+
+                print(sh.git.tag('-f', self._get_tag(), _cwd=repo_directory,
                                  _out=sys.stdout))
 
-            # TODO START Update this code to match what is in git.py
-            print(sh.git.tag('-f', self._get_tag(), _cwd=repo_directory,
-                                 _out=sys.stdout))
+                git_url = self._git_url(runtime_step_config)
 
-            git_url = self._git_url(runtime_step_config)
+                # TODO Replace with logic in git.py
+                self._git_push(repo_directory, 'http://{username}:{password}@{url}'.format(
+                    username=runtime_step_config['git-username'],
+                    password=runtime_step_config['git-password'],
+                    url=git_url[7:]))
 
-            self._git_push(repo_directory, 'http://' + runtime_step_config['git-username'] + ':' +
-                           runtime_step_config['git-password'] + '@' + git_url[7:])
-
-            # TODO END
-
-            # git_tag_push_code = _GitTagPushCode(self._StepImplementer__results_dir_path, # pylint: disable=no-member
-            #                                     self._StepImplementer__results_file_name, # pylint: disable=no-member
-            #                                     repo_directory)
-            # runtime_step_config['username'] = runtime_step_config['git-username']
-            # runtime_step_config['password'] = runtime_step_config['git-password']
-
-            # os.chdir(repo_directory)
-            # git_tag_push_code.run_step(runtime_step_config)  # pylint: disable=protected-access
+            except Exception:
+                raise RuntimeError("Unexpected error executing Git commands")
 
         print(
             sh.argocd.app.sync('--timeout', runtime_step_config['argocd-sync-timeout-seconds'], # pylint: disable=no-member
@@ -370,6 +365,23 @@ class ArgoCD(StepImplementer):
                 )
         except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
             raise RuntimeError('Error invoking git push')
+
+    @staticmethod
+    def _git_tag(git_tag_value):  # pragma: no cover
+        try:
+            # NOTE:
+            # this force is only needed locally in case of a re-reun of the same pipeline
+            # without a fresh check out. You will notice there is no force on the push
+            # making this an acceptable work around to the issue since on the off chance
+            # actually orverwriting a tag with a different comment, the push will fail
+            # because the tag will be attached to a different git hash.
+            sh.git.tag(  # pylint: disable=no-member
+                git_tag_value,
+                '-f',
+                _out=sys.stdout
+            )
+        except sh.ErrorReturnCode:  # pylint: disable=undefined-variable
+            raise RuntimeError('Error invoking git tag ' + git_tag_value)
 
     @staticmethod
     def _git_url(runtime_step_config):
