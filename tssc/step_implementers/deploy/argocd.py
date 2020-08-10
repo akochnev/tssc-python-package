@@ -229,10 +229,9 @@ class ArgoCD(StepImplementer):
                 )
             )
 
-        git_url = self._git_url(runtime_step_config)
-
         with tempfile.TemporaryDirectory() as repo_directory:
             try:
+                git_url = self._git_url(repo_directory, runtime_step_config)
                 sh.git.clone(runtime_step_config['helm-config-repo'], repo_directory)
                 sh.git.checkout(runtime_step_config['helm-config-repo-branch'],
                                 _cwd=repo_directory)
@@ -331,8 +330,6 @@ class ArgoCD(StepImplementer):
         return tag
 
     def _process_git_push(self, repo_directory, runtime_step_config):
-        git_url = self._git_url(runtime_step_config)
-
         username = None
         password = None
 
@@ -350,7 +347,7 @@ class ArgoCD(StepImplementer):
             print('No username/password found, assuming ssh')
         tag = self._get_tag()
         self._git_tag(repo_directory, tag)
-        git_url = self._git_url(runtime_step_config)
+        git_url = self._git_url(repo_directory, runtime_step_config)
         if git_url.startswith('http://'):
             if username and password:
                 self._git_push(repo_directory, 'http://{username}:{password}@{url}'.format(
@@ -426,10 +423,10 @@ class ArgoCD(StepImplementer):
             raise RuntimeError('Error invoking git tag ' + git_tag_value)
 
     @staticmethod
-    def _git_url(runtime_step_config):
+    def _git_url(repo_directory, runtime_step_config):
         return_val = None
-        if runtime_step_config.get('url'):
-            return_val = runtime_step_config.get('url')
+        if runtime_step_config.get('helm-config-repo'):
+            return_val = runtime_step_config.get('helm-config-repo')
         else:
             try:
                 return_val = sh.git.config(
@@ -438,7 +435,8 @@ class ArgoCD(StepImplementer):
                     _out=sys.stdout,
                     _tee=True,
                     _encoding='UTF-8',
-                    _decode_errors='ignore'
+                    _decode_errors='ignore',
+                    _cwd=repo_directory
                     ).rstrip()
 
             except sh.ErrorReturnCode:  # pylint: disable=undefined-variable # pragma: no cover
